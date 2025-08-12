@@ -45,24 +45,31 @@ Ideal for sharing directories over the network with fine-grained access control.
 | `nfs_export_dir_mode` | Default permissions mode for export directories | `'2775'`                      |
 | `nfs_export_dir_owner` | Default owner for export directories           | `'root'`                     |
 | `nfs_export_dir_group` | Default group for export directories           | `'nfsusers'` (created by role) |
-
+| `nfs_users_to_add_group` | List of users to add group for export directories          | `[]` (empty list)  |
 ---
 
-## Example `nfs_exports` variable
+## Example
 
 ```yaml
-nfs_exports:
-  - path: /srv/public
-    user: root
-    group: nfsusers
-    mode: '2775'
-    options: rw,async,no_subtree_check,no_root_squash
-    clients:
-      - cidr: "192.168.1.*"
-        options: rw,sync,no_subtree_check
-      - cidr: "192.168.25.*"
-        options: rw,no_subtree_check
-  - path: /srv/private
-    clients: "*"
-    options: rw,sync,no_subtree_check,root_squash
+- hosts: all
+  become: true
+  roles:
+   - role: evertonagilar.nfs-server
+     vars:
+       nfs_exports:
+        - path: /srv/public
+          user: root
+          group: nfsusers
+          mode: '2775'
+          options: rw,async,no_subtree_check,no_root_squash
+          clients:
+            - cidr: "192.168.1.*"
+              options: rw,sync,no_subtree_check
+            - cidr: "192.168.25.*"
+              options: rw,no_subtree_check
+        - path: /srv/private
+          clients: "*"
+          options: rw,sync,no_subtree_check,root_squash
+       nfs_users_to_add_group: ["evertonagilar"]
+
 ```

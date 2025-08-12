@@ -5,15 +5,17 @@
     - "ansible_host = {{ ansible_host }}"
     - "ansible_hostname = {{ ansible_hostname }}"
     - "nfs_exports = {{ nfs_exports }}"
+    - "nfs_export_dir_mode = {{ nfs_export_dir_mode }}"
+    - "nfs_export_dir_owner = {{ nfs_export_dir_owner }}"
+    - "nfs_export_dir_group = {{ nfs_export_dir_group }}"
 
 - name: Install NFS required packages
   apt:
-    name: "{{ item }}"
+    name:
+      - nfs-kernel-server
+      - nfs-common
+      - acl
     state: present
-  with_items:
-  - nfs-kernel-server
-  - nfs-common
-  - acl
 
 - name: Ensure /etc/exports exists but do not touch timestamp
   copy:
@@ -24,14 +26,31 @@
 
 - name: Create default group for NFS users
   group:
-    name: nfsusers
+    name: "{{ nfs_export_dir_group }}"
     state: present
+
+- name: Get users to add to "{{ nfs_export_dir_group }}" group
+  set_fact:
+    existing_users_to_add_group: "{{ (users_too_add_group + [ansible_user_id]) | select('in', lookup('pipe','getent passwd | cut -d: -f1').split('\n')) | list }}"
+
+- name: Show existing users to be added to "{{ nfs_export_dir_group }}" group
+  debug:
+    msg: "existing_users_to_add_group: {{ existing_users_to_add_group }}"
+
+- name: Add existing users in "{{ nfs_export_dir_group }}" group
+  become: true
+  user:
+    name: "{{ item }}"
+    groups: "{{ nfs_export_dir_group }}"
+    append: yes
+  loop: "{{ existing_users_to_add_group }}"
+  when: existing_users_to_add_group | length > 0
 
 - name: Create NFS export volume directories
   file:
     path: "{{ item.path }}"
-    owner: "{{ item.user | default('root') }}"
-    group: "{{ item.group | default('nfsusers') }}"
+    owner: "{{ item.user | default(nfs_export_dir_owner) }}"
+    group: "{{ item.group | default(nfs_export_dir_group) }}"
     mode: "{{ item.mode | default(nfs_export_dir_mode) }}"
     state: directory
   loop: "{{ nfs_exports }}"
@@ -51,7 +70,7 @@
 - name: Set ACL for NFS export directory
   acl:
     path: "{{ item.path }}"
-    entity: "{{ item.user | default('root') }}"
+    entity: "{{ item.user | default(nfs_export_dir_owner) }}"
     etype: user
     permissions: rwx
     state: present
@@ -60,7 +79,7 @@
 - name: Set default ACL for NFS export directory group
   acl:
     path: "{{ item.path }}"
-    entity: "{{ item.group | default('nfsusers') }}"
+    entity: "{{ item.group | default(nfs_export_dir_group) }}"
     etype: group
     permissions: rwx
     default: yes
@@ -70,8 +89,9 @@
 - name: Set owner and group of NFS export directory
   file:
     path: "{{ item.path }}"
-    owner: "{{ item.user | default('root') }}"
-    group: "{{ item.group | default('nfsusers') }}"
+    owner: "{{ item.user | default(nfs_export_dir_owner) }}"
+    group: "{{ item.group | default(nfs_export_dir_group) }}"
     state: directory
-    mode: '2775'
+    mode: "{{ nfs_export_dir_mode }}"
   loop: "{{ nfs_exports }}"
+

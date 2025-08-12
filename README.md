@@ -1,4 +1,4 @@
-# Ansible Role: NFS Server (evertonagilar.nfs-server)
+# Ansible Role: NFS Server
 
 ![Ansible Galaxy](https://img.shields.io/badge/Ansible--Galaxy-nfs--server-blue?style=flat-square)
 
@@ -32,8 +32,8 @@ Ideal for sharing directories over the network with fine-grained access control.
 
 ## Supported Platforms
 
-- Ubuntu 18.04+
-- Debian 10+
+- Ubuntu 22.04+
+- Debian 11+
 
 ---
 
@@ -45,8 +45,6 @@ Ideal for sharing directories over the network with fine-grained access control.
 | `nfs_export_dir_mode` | Default permissions mode for export directories | `'2775'`                      |
 | `nfs_export_dir_owner` | Default owner for export directories           | `'root'`                     |
 | `nfs_export_dir_group` | Default group for export directories           | `'nfsusers'` (created by role) |
-| Each export item in `nfs_exports` can include:  
-`path`, `user`, `group`, `mode`, `options`, `clients` (list or string) |
 
 ---
 
@@ -58,7 +56,7 @@ nfs_exports:
     user: root
     group: nfsusers
     mode: '2775'
-    options: rw,sync,no_subtree_check,no_root_squash
+    options: rw,async,no_subtree_check,no_root_squash
     clients:
       - cidr: "192.168.1.*"
         options: rw,sync,no_subtree_check
@@ -66,4 +64,5 @@ nfs_exports:
         options: rw,no_subtree_check
   - path: /srv/private
     clients: "*"
-    options: rw,sync,no_subtree_check
+    options: rw,sync,no_subtree_check,root_squash
+```

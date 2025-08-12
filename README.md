@@ -46,6 +46,8 @@ Ideal for sharing directories over the network with fine-grained access control.
 | `nfs_export_dir_owner` | Default owner for export directories           | `'root'`                     |
 | `nfs_export_dir_group` | Default group for export directories           | `'nfsusers'` (created by role) |
 | `nfs_users_to_add_group` | List of users to add group for export directories          | `[]` (empty list)  |
+| `nfs_users_to_add_group_by_uid` | List of users by UID to add group for export directories          | `[]` (empty list)  |
+
 ---
 
 ## Playbook sample
@@ -58,7 +60,6 @@ Ideal for sharing directories over the network with fine-grained access control.
      vars:
        nfs_exports:
         - path: /srv/public
-          mode: '2775'
           options: rw,async,no_subtree_check,no_root_squash
           clients:
             - cidr: "192.168.1.*"
@@ -68,6 +69,11 @@ Ideal for sharing directories over the network with fine-grained access control.
         - path: /srv/private
           clients: "*"
           options: rw,sync,no_subtree_check,root_squash
-       nfs_users_to_add_group: ["evertonagilar"]
+       nfs_users_to_add_group: 
+        - "vagrant"
+        - "root"
+        - "evertonagilar"
+       nfs_users_to_add_group_by_uid: 
+        - 1000
 
 ```

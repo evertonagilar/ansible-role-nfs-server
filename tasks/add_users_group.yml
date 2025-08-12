@@ -1,0 +1,30 @@
+---
+- name: Get passwd list from remote
+  command: getent passwd
+  register: passwd_list
+  changed_when: false
+
+- name: Get list of remote users
+  set_fact:
+    remote_users: "{{ passwd_list.stdout_lines | map('regex_replace', '^([^:]+):.*$', '\\1') | list }}"
+
+- name: Get users to add to "{{ nfs_export_dir_group }}" group
+  set_fact:
+    existing_users_to_add_group: >-
+      {{ (nfs_users_to_add_group + [ansible_user_id])
+         | unique
+         | select('in', remote_users)
+         | list }}
+
+- name: Show existing users to be added to "{{ nfs_export_dir_group }}" group
+  debug:
+    msg: "existing_users_to_add_group: {{ existing_users_to_add_group }}"
+
+- name: Add existing users in "{{ nfs_export_dir_group }}" group
+  become: true
+  user:
+    name: "{{ item }}"
+    groups: "{{ nfs_export_dir_group }}"
+    append: yes
+  loop: "{{ existing_users_to_add_group }}"
+  when: existing_users_to_add_group | length > 0

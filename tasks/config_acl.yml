@@ -1,0 +1,29 @@
+---
+- name: Set ACL for NFS export directory
+  acl:
+    path: "{{ item.path }}"
+    entity: "{{ item.user | default(nfs_export_dir_owner) }}"
+    etype: user
+    permissions: rwx
+    state: present
+  loop: "{{ nfs_exports }}"
+
+- name: Set default ACL for NFS export directory group
+  acl:
+    path: "{{ item.path }}"
+    entity: "{{ item.group | default(nfs_export_dir_group) }}"
+    etype: group
+    permissions: rwx
+    default: yes
+    state: present
+  loop: "{{ nfs_exports }}"
+
+- name: Set owner and group of NFS export directory
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.user | default(nfs_export_dir_owner) }}"
+    group: "{{ item.group | default(nfs_export_dir_group) }}"
+    state: directory
+    mode: "{{ nfs_export_dir_mode }}"
+  loop: "{{ nfs_exports }}"
+

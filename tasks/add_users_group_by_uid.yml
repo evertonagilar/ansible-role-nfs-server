@@ -1,0 +1,43 @@
+---
+- name: Get passwd list from remote
+  command: getent passwd
+  register: passwd_list
+  changed_when: false
+
+- name: Get list of remote users and their UIDs
+  set_fact:
+    remote_users_by_uid: >-
+      {{
+        passwd_list.stdout_lines
+        | map('regex_findall', '^([^:]+):[^:]*:([0-9]+):')
+        | map('first')
+        | list
+      }}
+
+- name: Map UIDs to usernames (dict)
+  set_fact:
+    uid_to_user_map: "{{ dict(remote_users_by_uid | map('reverse') | list) }}"
+
+- name: Filter existing UIDs in uid_to_user_map and get usernames to add
+  set_fact:
+    existing_users_to_add_group_by_uid: >-
+      {{
+        nfs_users_to_add_group_by_uid
+        | map('string')
+        | select('in', uid_to_user_map.keys() | list)
+        | map('extract', uid_to_user_map)
+        | list
+      }}
+
+- name: Show users resolved by UID to be added to "{{ nfs_export_dir_group }}" group
+  debug:
+    msg: "existing_users_to_add_group_by_uid: {{ existing_users_to_add_group_by_uid }}"
+
+- name: Add existing users in "{{ nfs_export_dir_group }}" group by UID
+  become: true
+  user:
+    name: "{{ item }}"
+    groups: "{{ nfs_export_dir_group }}"
+    append: yes
+  loop: "{{ existing_users_to_add_group_by_uid }}"
+  when: existing_users_to_add_group_by_uid | length > 0

@@ -2,5 +2,6 @@ nfs_export: []
 nfs_export_dir_mode: '2775'
 nfs_export_dir_owner: root
 nfs_export_dir_group: nfsusers
-nfs_users_to_add_group: ["root", "vagrant"]
+nfs_users_to_add_group: []
+nfs_users_to_add_group_by_uid: []
 

@@ -71,7 +71,6 @@ Ideal for sharing directories over the network with fine-grained access control.
           options: rw,sync,no_subtree_check,root_squash
        nfs_users_to_add_group: 
         - "vagrant"
-        - "root"
         - "evertonagilar"
        nfs_users_to_add_group_by_uid: 
         - 1000

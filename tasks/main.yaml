@@ -31,7 +31,7 @@
 
 - name: Get users to add to "{{ nfs_export_dir_group }}" group
   set_fact:
-    existing_users_to_add_group: "{{ (nfs_users_too_add_group + [ansible_user_id]) | select('in', lookup('pipe','getent passwd | cut -d: -f1').split('\n')) | list }}"
+    existing_users_to_add_group: "{{ (nfs_users_to_add_group + [ansible_user_id]) | select('in', lookup('pipe','getent passwd | cut -d: -f1').split('\n')) | list }}"
 
 - name: Show existing users to be added to "{{ nfs_export_dir_group }}" group
   debug:

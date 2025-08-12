@@ -1,0 +1,7 @@
+---
+- name: Restart NFS server
+  systemd:
+    name: nfs-kernel-server
+    enabled: yes
+    state: restarted
+  when: nfs_exports | length > 0

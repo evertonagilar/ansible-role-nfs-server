@@ -1,0 +1,48 @@
+# Arquivos temporários do sistema/editor
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+*~
+
+# Diretórios ocultos
+.cache/
+.vscode/
+.idea/
+__pycache__/
+.DS_Store
+
+# Arquivos e diretórios do Ansible Galaxy
+*.tar.gz
+*.tar
+*.zip
+*.egg-info/
+.eggs/
+ansible_collections/
+collections/
+
+# Testes locais
+tests/output/
+tests/*.retry
+
+# Arquivos gerados por molecule (se estiver usando)
+.molecule/
+molecule/default/.pytest_cache/
+molecule/default/.tox/
+
+# Variáveis e inventários locais
+inventory/
+host_vars/
+group_vars/
+secrets.yml
+vault.yml
+
+# Arquivos específicos de Galaxy import
+.galaxy_install_info
+
+# Certificados e chaves (se você gera com a role)
+*.key
+*.crt
+*.pem
+certs/

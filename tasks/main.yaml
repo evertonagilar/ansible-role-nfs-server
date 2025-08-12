@@ -1,0 +1,77 @@
+---
+- name: Variables to install NFS server
+  debug:
+    msg:
+    - "ansible_host = {{ ansible_host }}"
+    - "ansible_hostname = {{ ansible_hostname }}"
+    - "nfs_exports = {{ nfs_exports }}"
+
+- name: Install NFS required packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - nfs-kernel-server
+  - nfs-common
+  - acl
+
+- name: Ensure /etc/exports exists but do not touch timestamp
+  copy:
+    content: ""
+    dest: /etc/exports
+    force: no
+    mode: '0644'
+
+- name: Create default group for NFS users
+  group:
+    name: nfsusers
+    state: present
+
+- name: Create NFS export volume directories
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.user | default('root') }}"
+    group: "{{ item.group | default('nfsusers') }}"
+    mode: "{{ item.mode | default(nfs_export_dir_mode) }}"
+    state: directory
+  loop: "{{ nfs_exports }}"
+  when: nfs_exports | length > 0
+
+- name: Config file /etc/exports
+  lineinfile:
+    dest: /etc/exports
+    state: present
+    line: "{% set default_opts = item.get('options', 'rw,sync,no_subtree_check,no_root_squash') -%} {% set raw_clients = item.get('clients', [{'cidr': '*', 'options': default_opts}]) -%} {% set clients_list = [] -%} {% if raw_clients is string -%} {%   set _ = clients_list.append({'cidr': raw_clients, 'options': default_opts}) -%} {% elif raw_clients is iterable -%} {%   for c in raw_clients -%} {%     if c is string -%} {%       set _ = clients_list.append({'cidr': c, 'options': default_opts}) -%} {%     else -%} {%       set _ = clients_list.append({'cidr': c.cidr, 'options': c.get('options', default_opts)}) -%} {%     endif -%} {%   endfor -%} {% endif -%} {{ item.path }} {{ clients_list | map(attribute='cidr') | zip(clients_list | map(attribute='options') | list) | map('join', '(') | map('regex_replace', '$', ')') | join(' ') }}"
+  loop: "{{ nfs_exports }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when: nfs_exports | length > 0
+  notify: Restart NFS server
+
+- name: Set ACL for NFS export directory
+  acl:
+    path: "{{ item.path }}"
+    entity: "{{ item.user | default('root') }}"
+    etype: user
+    permissions: rwx
+    state: present
+  loop: "{{ nfs_exports }}"
+
+- name: Set default ACL for NFS export directory group
+  acl:
+    path: "{{ item.path }}"
+    entity: "{{ item.group | default('nfsusers') }}"
+    etype: group
+    permissions: rwx
+    default: yes
+    state: present
+  loop: "{{ nfs_exports }}"
+
+- name: Set owner and group of NFS export directory
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.user | default('root') }}"
+    group: "{{ item.group | default('nfsusers') }}"
+    state: directory
+    mode: '2775'
+  loop: "{{ nfs_exports }}"

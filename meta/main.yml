@@ -1,0 +1,10 @@
+galaxy_info:
+  author: Everton de Vargas Agilar
+  description: Setup NFS server with Ansible
+  license: MIT
+  min_ansible_version: "2.10"
+
+  platforms:
+  - name: Ubuntu
+    versions:
+    - jammy

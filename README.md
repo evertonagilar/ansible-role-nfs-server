@@ -48,7 +48,7 @@ Ideal for sharing directories over the network with fine-grained access control.
 | `nfs_users_to_add_group` | List of users to add group for export directories          | `[]` (empty list)  |
 ---
 
-## Example
+## Playbook sample
 
 ```yaml
 - hosts: all
@@ -58,8 +58,6 @@ Ideal for sharing directories over the network with fine-grained access control.
      vars:
        nfs_exports:
         - path: /srv/public
-          user: root
-          group: nfsusers
           mode: '2775'
           options: rw,async,no_subtree_check,no_root_squash
           clients:
